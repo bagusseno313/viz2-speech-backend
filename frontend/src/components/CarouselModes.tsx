@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ModeCard } from './ModeCard';
-import { modeAt, wrapIndex } from '../data/modes';
-import { colors } from '../theme/colors';
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ModeCard } from "./ModeCard";
+import { modeAt, wrapIndex } from "../data/modes";
+import { colors } from "../theme/colors";
 
 interface Props {
   /** Index of the active (centered) mode in the MODES array. */
@@ -51,7 +51,8 @@ function ModeButton({
       accessibilityLabel={`Pilih mode ${mode.label}`}
       disabled={!onPress}
       onPress={onPress}
-      style={styles.cardButton}>
+      style={styles.cardButton}
+    >
       <ModeCard mode={mode} />
     </TouchableOpacity>
   );
@@ -61,13 +62,13 @@ const styles = StyleSheet.create({
   container: {
     height: 150,
     backgroundColor: colors.screen,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 15,
   },
   cardButton: {

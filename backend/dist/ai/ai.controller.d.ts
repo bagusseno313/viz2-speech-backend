@@ -17,6 +17,13 @@ export declare class AiController {
         model: string;
         fileName: string | null;
     }>;
+    transcribeAudio(file: any): Promise<{
+        text: string;
+        provider: string;
+        status: string;
+        model: string;
+        fileName: string | null;
+    }>;
     answerVqa(body: {
         question?: string;
         caption?: string;

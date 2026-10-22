@@ -7,9 +7,18 @@ type UploadedImage = {
     path?: string;
 };
 export declare class AiService {
+    static sanitizeCaption(value?: string | null): string;
     private normalizeMode;
     private callOllamaVision;
     private callOllamaText;
+    private callWhisperTranscription;
+    transcribeAudio(file?: UploadedImage): Promise<{
+        text: string;
+        provider: string;
+        status: string;
+        model: string;
+        fileName: string | null;
+    }>;
     generateCaption(mode: string, prompt?: string, file?: UploadedImage): Promise<{
         caption: string;
         mode: ModeKey;

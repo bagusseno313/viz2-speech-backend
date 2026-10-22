@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Viz2Speech",
-    "slug": "viz2speech",
+    "slug": "viz-speech-backend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/app-icon.png",
@@ -21,7 +21,10 @@
         "CAMERA",
         "RECORD_AUDIO",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "package": "com.iasha.viz2speech",
       "adaptiveIcon": {
@@ -45,8 +48,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "36fac89e-8ae3-460c-a21a-08c8621c30a1"
+        "projectId": "8a985092-b535-4bec-9b0b-5dd0376a3da8"
       }
-    }
+    },
+    "owner": "bagusseno354"
   }
 }

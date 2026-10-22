@@ -10,6 +10,18 @@ interface CaptionBackendResponse {
   summary?: string;
 }
 
+function sanitizeCaptionText(value?: string | null): string {
+  const cleaned = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  return cleaned.replace(/\s+[A-Za-z0-9]{1,2}\s*$/u, "").trim();
+}
+
 async function imageUriToBlob(
   photoUri: string,
   mimeType: string,
@@ -110,13 +122,12 @@ export async function generateCaption(
 
     const payload = JSON.parse(uploadResult.body) as CaptionBackendResponse;
     console.log("[CaptionService] success", payload);
-    return (
-      payload.caption ??
-      payload.text ??
-      payload.description ??
-      payload.summary ??
-      SAMPLE_CAPTIONS[mode]
+
+    const cleanedCaption = sanitizeCaptionText(
+      payload.caption ?? payload.text ?? payload.description ?? payload.summary,
     );
+
+    return cleanedCaption || SAMPLE_CAPTIONS[mode];
   } catch (error) {
     console.log("[CaptionService] fetch failed", error);
     throw error;

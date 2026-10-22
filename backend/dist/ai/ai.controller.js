@@ -39,6 +39,13 @@ let AiController = class AiController {
         }
         return this.aiService.generateCaption(body.mode ?? 'detail', body.prompt ?? 'Jelaskan gambar ini untuk pengguna tunanetra.', file);
     }
+    async transcribeAudio(file) {
+        console.debug('Transcribing audio...', file);
+        if (!file) {
+            throw new common_1.BadRequestException('Audio file is required in field "audio".');
+        }
+        return this.aiService.transcribeAudio(file);
+    }
     async answerVqa(body) {
         if (!body.question || !body.question.trim()) {
             throw new common_1.BadRequestException('Question is required.');
@@ -79,6 +86,26 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AiController.prototype, "generateCaption", null);
+__decorate([
+    (0, common_1.Post)('stt'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio', {
+        limits: {
+            fileSize: 20 * 1024 * 1024,
+        },
+        fileFilter: (_req, file, callback) => {
+            const isAudio = file?.mimetype?.startsWith('audio/') ||
+                /\.(wav|mp3|m4a|aac|ogg)$/i.test(file?.originalname ?? '');
+            if (!isAudio) {
+                return callback(new common_1.BadRequestException('Uploaded file must be an audio file.'), false);
+            }
+            callback(null, true);
+        },
+    })),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AiController.prototype, "transcribeAudio", null);
 __decorate([
     (0, common_1.Post)('vqa'),
     __param(0, (0, common_1.Body)()),

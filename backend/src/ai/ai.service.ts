@@ -26,6 +26,28 @@ const CAPTION_TEMPLATES: Record<ModeKey, string> = {
 
 @Injectable()
 export class AiService {
+  static sanitizeCaption(value?: string | null): string {
+    const cleaned = String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned) {
+      return '';
+    }
+
+    const withoutTrailingNoise = cleaned.replace(
+      /\s+[A-Za-z0-9]{1,2}\s*$/u,
+      '',
+    );
+    const normalized = withoutTrailingNoise.replace(/[\s.]+$/u, '').trim();
+
+    if (!normalized) {
+      return '';
+    }
+
+    return /[.!?]$/.test(normalized) ? normalized : `${normalized}.`;
+  }
+
   private normalizeMode(mode?: string): ModeKey {
     const key = String(mode ?? 'detail').toLowerCase();
     if (key in CAPTION_TEMPLATES) {
@@ -65,6 +87,107 @@ export class AiService {
     return String(response.data?.response ?? '').trim();
   }
 
+  private async callWhisperTranscription(file: UploadedImage): Promise<string> {
+    const baseUrl = process.env.WHISPER_BASE_URL ?? 'http://localhost:8001';
+    const model = process.env.WHISPER_MODEL ?? 'base';
+    const audioBuffer = file.buffer ?? Buffer.alloc(0);
+    const mimeType = file.mimetype ?? 'audio/wav';
+    const fileName = file.originalname ?? 'audio.wav';
+
+    const endpoints = [
+      `${baseUrl}/v1/audio/transcriptions`,
+      `${baseUrl}/asr`,
+      `${baseUrl}/transcribe`,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const formData = new FormData();
+        const audioPart = new Uint8Array(audioBuffer);
+        formData.append(
+          'file',
+          new Blob([audioPart], { type: mimeType }),
+          fileName,
+        );
+        formData.append('model', model);
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const payload = (await response.json()) as {
+          text?: string;
+          transcript?: string;
+          result?: string;
+          data?: { text?: string };
+        };
+
+        const transcript =
+          payload.text ??
+          payload.transcript ??
+          payload.result ??
+          payload.data?.text ??
+          '';
+
+        if (transcript.trim()) {
+          return transcript.trim();
+        }
+      } catch {
+        // try the next standard whisper endpoint
+      }
+    }
+
+    return '';
+  }
+
+  async transcribeAudio(file?: UploadedImage): Promise<{
+    text: string;
+    provider: string;
+    status: string;
+    model: string;
+    fileName: string | null;
+  }> {
+    const useFakeAi = process.env.USE_FAKE_AI === 'true';
+    const provider = process.env.WHISPER_PROVIDER ?? 'whisper';
+    const model = process.env.WHISPER_MODEL ?? 'base';
+
+    if (useFakeAi || !provider || provider === 'mock') {
+      return {
+        text: '',
+        provider: 'mock',
+        status: 'skipped',
+        model,
+        fileName: file?.originalname ?? null,
+      };
+    }
+
+    if (provider === 'whisper') {
+      const transcript = await this.callWhisperTranscription(file ?? {});
+      const text = transcript.trim();
+
+      return {
+        text,
+        provider,
+        status: text ? 'completed' : 'empty',
+        model,
+        fileName: file?.originalname ?? null,
+      };
+    }
+
+    return {
+      text: '',
+      provider,
+      status: 'unsupported',
+      model,
+      fileName: file?.originalname ?? null,
+    };
+  }
+
   async generateCaption(
     mode: string,
     prompt?: string,
@@ -86,7 +209,7 @@ export class AiService {
 
     if (useFakeAi || !provider || provider === 'mock') {
       return {
-        caption: fallbackCaption,
+        caption: AiService.sanitizeCaption(fallbackCaption),
         mode: normalizedMode,
         provider: 'mock',
         model: 'fallback-caption',
@@ -103,8 +226,7 @@ export class AiService {
           'Deskripsikan orang yang terlihat dan aktivitasnya dengan bahasa yang sederhana.',
         environment:
           'Deskripsikan lingkungan di sekitarnya, objek utama, dan kondisi ruang secara jelas.',
-        simple:
-          'Berikan deskripsi singkat satu kalimat yang mudah dipahami.',
+        simple: 'Berikan deskripsi singkat satu kalimat yang mudah dipahami.',
         detail:
           'Berikan deskripsi visual yang kaya detail tapi tetap ringkas untuk dibacakan.',
       }[normalizedMode];
@@ -114,8 +236,10 @@ export class AiService {
         imageBase64,
       );
 
+      const caption = AiService.sanitizeCaption(result || fallbackCaption);
+
       return {
-        caption: result || fallbackCaption,
+        caption: caption || AiService.sanitizeCaption(fallbackCaption),
         mode: normalizedMode,
         provider,
         model,
@@ -136,7 +260,12 @@ export class AiService {
     question: string,
     caption?: string,
     mode?: string,
-  ): Promise<{ question: string; answer: string; mode: string; provider: string }> {
+  ): Promise<{
+    question: string;
+    answer: string;
+    mode: string;
+    provider: string;
+  }> {
     const normalizedMode = this.normalizeMode(mode);
     const useFakeAi = process.env.USE_FAKE_AI === 'true';
     const provider = process.env.AI_PROVIDER ?? 'mock';
@@ -178,7 +307,13 @@ export class AiService {
   async synthesizeTts(
     text: string,
     language = 'id-ID',
-  ): Promise<{ text: string; language: string; provider: string; status: string; audioUrl: string | null }> {
+  ): Promise<{
+    text: string;
+    language: string;
+    provider: string;
+    status: string;
+    audioUrl: string | null;
+  }> {
     const useFakeAi = process.env.USE_FAKE_AI === 'true';
     const provider = process.env.TTS_PROVIDER ?? 'mock';
 

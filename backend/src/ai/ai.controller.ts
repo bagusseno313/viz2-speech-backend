@@ -56,7 +56,9 @@ export class AiController {
       file.mimetype === 'text/plain' ||
       file.buffer?.toString('utf8').includes('File not found')
     ) {
-      throw new BadRequestException('Invalid image upload received from client.');
+      throw new BadRequestException(
+        'Invalid image upload received from client.',
+      );
     }
 
     return this.aiService.generateCaption(
@@ -64,6 +66,38 @@ export class AiController {
       body.prompt ?? 'Jelaskan gambar ini untuk pengguna tunanetra.',
       file,
     );
+  }
+
+  @Post('stt')
+  @UseInterceptors(
+    FileInterceptor('audio', {
+      limits: {
+        fileSize: 20 * 1024 * 1024,
+      },
+      fileFilter: (_req, file, callback) => {
+        const isAudio =
+          file?.mimetype?.startsWith('audio/') ||
+          /\.(wav|mp3|m4a|aac|ogg)$/i.test(file?.originalname ?? '');
+
+        if (!isAudio) {
+          return callback(
+            new BadRequestException('Uploaded file must be an audio file.'),
+            false,
+          );
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
+  async transcribeAudio(@UploadedFile() file: any) {
+    console.debug('Transcribing audio...', file);
+
+    if (!file) {
+      throw new BadRequestException('Audio file is required in field "audio".');
+    }
+
+    return this.aiService.transcribeAudio(file);
   }
 
   @Post('vqa')
@@ -87,9 +121,7 @@ export class AiController {
   }
 
   @Post('tts')
-  async synthesizeTts(
-    @Body() body: { text?: string; language?: string },
-  ) {
+  async synthesizeTts(@Body() body: { text?: string; language?: string }) {
     if (!body.text || !body.text.trim()) {
       throw new BadRequestException('Text is required.');
     }

@@ -1,19 +1,23 @@
-import React, { useCallback, useRef } from 'react';
-import { Pressable, StyleProp, ViewStyle } from 'react-native';
-import { speak } from '../services/speech';
+import React, { useCallback, useRef } from "react";
+import { Pressable, StyleProp, ViewStyle } from "react-native";
+import { speak } from "../services/speech";
 
 const DOUBLE_TAP_MS = 320;
+
+type TriggerMode = "double-tap" | "single-tap";
 
 interface Props {
   /** Spoken aloud on a single tap so the user knows what the button is. */
   label: string;
-  /** Run only on a confirming double tap. */
+  /** Run when the interaction is confirmed. */
   onActivate: () => void;
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   hitSlop?: number;
   /** Optional spoken text on activation; defaults to re-speaking `label`. */
   activateLabel?: string;
+  /** Whether activation happens on a single tap or a confirming double tap. */
+  triggerMode?: TriggerMode;
 }
 
 /**
@@ -30,10 +34,17 @@ export function VoiceButton({
   style,
   hitSlop,
   activateLabel,
+  triggerMode = "double-tap",
 }: Props) {
   const lastTap = useRef(0);
 
   const onPress = useCallback(() => {
+    if (triggerMode === "single-tap") {
+      speak(activateLabel ?? label);
+      onActivate();
+      return;
+    }
+
     const now = Date.now();
     if (now - lastTap.current < DOUBLE_TAP_MS) {
       lastTap.current = 0;
@@ -43,7 +54,7 @@ export function VoiceButton({
       lastTap.current = now;
       speak(label);
     }
-  }, [label, activateLabel, onActivate]);
+  }, [label, activateLabel, onActivate, triggerMode]);
 
   return (
     <Pressable
@@ -52,7 +63,8 @@ export function VoiceButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint="Sentuh dua kali untuk menjalankan.">
+      accessibilityHint="Sentuh dua kali untuk menjalankan."
+    >
       {children}
     </Pressable>
   );

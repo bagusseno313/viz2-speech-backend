@@ -21,6 +21,7 @@ export const AI_CONFIG = {
   apiBaseUrl: normalizeApiBaseUrl(rawApiBaseUrl),
   endpoints: {
     caption: "/api/caption",
+    stt: "/api/stt",
     vqa: "/api/vqa",
     tts: "/api/tts",
   },

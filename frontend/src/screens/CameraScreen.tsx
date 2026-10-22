@@ -101,21 +101,26 @@ export function CameraScreen({ navigation }: Props) {
   // --- Actions ---------------------------------------------------------------
 
   const selectMode = useCallback((nextIndex: number) => {
-    const targetIndex = wrapIndex(nextIndex);
-    setModeIndex(targetIndex);
+    const next = wrapIndex(nextIndex);
+    setModeIndex(next);
     Haptics.selectionAsync();
-    speak(MODES[targetIndex].spokenLabel);
+    speak(MODES[next].spokenLabel);
     setPhase("scan");
     setCaption("");
     setPhotoUri(null);
   }, []);
 
-  const changeMode = useCallback(
-    (dir: 1 | -1) => {
-      selectMode(modeIndex + dir);
-    },
-    [modeIndex, selectMode],
-  );
+  const changeMode = useCallback((dir: 1 | -1) => {
+    setModeIndex((i) => {
+      const next = wrapIndex(i + dir);
+      Haptics.selectionAsync();
+      speak(MODES[next].spokenLabel);
+      return next;
+    });
+    setPhase("scan");
+    setCaption("");
+    setPhotoUri(null);
+  }, []);
 
   const capture = useCallback(async () => {
     if (phase === "processing") return;
@@ -135,7 +140,7 @@ export function CameraScreen({ navigation }: Props) {
       await delay(wait);
       setCaption(text);
       setPhase("result");
-      speak(text);
+      speak(text, { interrupt: false });
     } catch (error) {
       console.log("[CameraScreen] capture failed", error);
       setPhase("scan");
