@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Viz2Speech",
+    "slug": "viz2speech",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/app-icon.png",
+    "scheme": "viz2speech",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Viz2Speech menggunakan kamera untuk mengambil gambar dan membuat deskripsi suara.",
+        "NSMicrophoneUsageDescription": "Viz2Speech menggunakan mikrofon untuk mengajukan pertanyaan lanjutan.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.iasha.viz2speech"
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.iasha.viz2speech",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/app-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Viz2Speech menggunakan kamera untuk mengambil gambar dan membuat deskripsi suara.",
+          "microphonePermission": "Viz2Speech menggunakan mikrofon untuk mengajukan pertanyaan lanjutan."
+        }
+      ],
+      "expo-font",
+      "expo-audio",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "36fac89e-8ae3-460c-a21a-08c8621c30a1"
+      }
+    }
+  }
+}
