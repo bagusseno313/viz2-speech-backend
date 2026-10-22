@@ -202,7 +202,7 @@ export function VQAScreen({ navigation, route }: Props) {
             <TextInput
               value={questionInput}
               onChangeText={setQuestionInput}
-              placeholder="Tulis pertanyaanmu..."
+              placeholder="Rekam pertanyaanmu..."
               placeholderTextColor={colors.textOnDark + "99"}
               style={styles.input}
               multiline
