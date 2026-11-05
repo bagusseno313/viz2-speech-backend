@@ -106,7 +106,7 @@ export class AiService {
     const model = process.env.PADDLEOCR_MODEL ?? 'PP-OCRv6';
     const language = process.env.PADDLEOCR_LANG ?? 'id';
     const timeoutMs = Number.parseInt(
-      process.env.PADDLEOCR_TIMEOUT_MS ?? '180000',
+      process.env.PADDLEOCR_TIMEOUT_MS ?? '300000',
       10,
     );
 
@@ -129,7 +129,7 @@ export class AiService {
         method: 'POST',
         body: formData,
         signal: AbortSignal.timeout(
-          Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 180000,
+          Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 300000,
         ),
       });
     } catch (error) {
