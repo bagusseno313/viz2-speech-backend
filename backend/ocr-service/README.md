@@ -10,7 +10,8 @@ From the repository root:
 
 ```bash
 docker build -t viz2speech-paddleocr ./backend/ocr-service
-docker run --name viz2speech-paddleocr --rm -p 8002:8002 viz2speech-paddleocr
+docker run --name viz2speech-paddleocr --rm -p 8002:8002 \\
+  -v paddleocr-cache:/root/.paddlex viz2speech-paddleocr
 ```
 
 On Apple Silicon Macs, build the Linux x86_64 image explicitly if the local
@@ -18,7 +19,8 @@ PaddlePaddle wheel is not available for your host architecture:
 
 ```bash
 docker build --platform linux/amd64 -t viz2speech-paddleocr ./backend/ocr-service
-docker run --platform linux/amd64 --name viz2speech-paddleocr --rm -p 8002:8002 viz2speech-paddleocr
+docker run --platform linux/amd64 --name viz2speech-paddleocr --rm -p 8002:8002 \\
+  -v paddleocr-cache:/root/.paddlex viz2speech-paddleocr
 ```
 
 The first OCR request downloads the model weights, so the service needs network
