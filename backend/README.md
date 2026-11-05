@@ -155,7 +155,7 @@ OCR_PROVIDER=paddleocr
 PADDLEOCR_BASE_URL=http://localhost:8002
 PADDLEOCR_MODEL=PP-OCRv6
 PADDLEOCR_LANG=id
-PADDLEOCR_TIMEOUT_MS=180000
+PADDLEOCR_TIMEOUT_MS=300000
 ```
 
 The first OCR request downloads the model weights. The OCR service must remain
