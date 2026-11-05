@@ -77,8 +77,13 @@ def extract_ocr_lines(predictions: Any) -> list[dict[str, float | str]]:
     if predictions is None:
         return []
 
-    if not isinstance(predictions, (list, tuple)):
+    if isinstance(predictions, (dict, str, bytes)):
         predictions = [predictions]
+    else:
+        try:
+            predictions = list(predictions)
+        except TypeError:
+            predictions = [predictions]
 
     lines: list[dict[str, float | str]] = []
     for prediction in predictions:
