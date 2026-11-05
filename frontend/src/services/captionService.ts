@@ -11,15 +11,9 @@ interface CaptionBackendResponse {
 }
 
 function sanitizeCaptionText(value?: string | null): string {
-  const cleaned = String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!cleaned) {
-    return "";
-  }
-
-  return cleaned.replace(/\s+[A-Za-z0-9]{1,2}\s*$/u, "").trim();
+  // Preserve short but valid endings such as Indonesian words "di"/"ke"
+  // and abbreviations like "AI"/"3D". Only normalize whitespace here.
+  return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
 async function imageUriToBlob(
