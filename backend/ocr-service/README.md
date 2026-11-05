@@ -53,9 +53,9 @@ uvicorn main:app --host 0.0.0.0 --port 8002
 
 With the requirements installed:
 
-\`\`\`bash
+```bash
 python -m unittest test_main.py
-\`\`\`
+```
 
 ## API
 
@@ -73,7 +73,7 @@ Response:
 
 ```json
 {
-  "text": "INFORMASI DOKUMEN\\nBaris berikutnya",
+  "text": "INFORMASI DOKUMEN\nBaris berikutnya",
   "lines": [
     { "text": "INFORMASI DOKUMEN", "confidence": 0.99 },
     { "text": "Baris berikutnya", "confidence": 0.98 }
