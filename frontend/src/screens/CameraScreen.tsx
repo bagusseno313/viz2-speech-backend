@@ -293,12 +293,12 @@ export function CameraScreen({ navigation }: Props) {
           />
         </GestureDetector>
 
-        {/* Caption banner — gradient + uppercase white text, after a result. */}
+        {/* Caption banner — scrollable result text, especially for OCR documents. */}
         {phase === "result" && !!caption && (
           <LinearGradient
             colors={["rgba(0,0,0,0.92)", "rgba(0,0,0,0)"]}
             style={styles.captionBanner}
-            pointerEvents="none"
+            pointerEvents="box-none"
           >
             <ScrollView
               style={styles.captionScroll}
@@ -420,7 +420,8 @@ const styles = StyleSheet.create({
     maxHeight: "52%",
   },
   captionScroll: {
-    flexGrow: 0,
+    flex: 1,
+    minHeight: 0,
   },
   captionScrollContent: {
     paddingBottom: 4,
