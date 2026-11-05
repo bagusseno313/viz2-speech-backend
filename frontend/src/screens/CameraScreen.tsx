@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Image,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -299,7 +300,20 @@ export function CameraScreen({ navigation }: Props) {
             style={styles.captionBanner}
             pointerEvents="none"
           >
-            <Text style={styles.captionText}>{caption.toUpperCase()}</Text>
+            <ScrollView
+              style={styles.captionScroll}
+              contentContainerStyle={styles.captionScrollContent}
+              showsVerticalScrollIndicator
+            >
+              <Text
+                style={[
+                  styles.captionText,
+                  activeMode.key === "document" && styles.documentCaptionText,
+                ]}
+              >
+                {caption}
+              </Text>
+            </ScrollView>
           </LinearGradient>
         )}
 
@@ -403,6 +417,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 40,
     paddingHorizontal: 28,
+    maxHeight: "52%",
+  },
+  captionScroll: {
+    flexGrow: 0,
+  },
+  captionScrollContent: {
+    paddingBottom: 4,
   },
   captionText: {
     color: colors.textOnDark,
@@ -410,6 +431,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     textAlign: "center",
+  },
+  documentCaptionText: {
+    textAlign: "left",
+    fontSize: 14,
+    lineHeight: 20,
   },
 
   centerFill: {
