@@ -25,7 +25,7 @@ docker run --platform linux/amd64 --name viz2speech-paddleocr --rm -p 8002:8002 
 
 The first OCR request downloads the model weights, so the service needs network
 access and enough disk space for the model cache. Keep the service running while
-using DOCUMENT mode.
+using DOCUMENT mode. The backend allows up to five minutes for the first request.
 
 ## Run locally (Linux)
 
@@ -48,6 +48,14 @@ uvicorn main:app --host 0.0.0.0 --port 8002
 | `PADDLEOCR_MODEL` | `PP-OCRv6` | PaddleOCR model family |
 | `PADDLEOCR_LANG` | `id` | Indonesian OCR language code |
 | `PADDLEOCR_MAX_IMAGE_BYTES` | `10485760` | Maximum uploaded image size |
+
+## Run the OCR parser tests
+
+With the requirements installed:
+
+\`\`\`bash
+python -m unittest test_main.py
+\`\`\`
 
 ## API
 
