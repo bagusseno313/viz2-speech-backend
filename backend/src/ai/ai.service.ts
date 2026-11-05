@@ -177,7 +177,7 @@ export class AiService {
     const text = String(payload.text ?? '')
       .replace(/\r\n?/gu, '\n')
       .split('\n')
-      .map((line) => line.replace(/[\\t ]+/gu, ' ').trim())
+      .map((line) => line.replace(/[ \t]+/gu, ' ').trim())
       .filter(Boolean)
       .join('\n')
       .trim();
