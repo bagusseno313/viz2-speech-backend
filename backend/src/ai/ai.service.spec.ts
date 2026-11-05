@@ -10,13 +10,13 @@ describe('AiService', () => {
     delete process.env.WHISPER_PROVIDER;
   });
 
-  it('drops incomplete trailing fragments from generated captions', () => {
-    const rawCaption =
-      'Ada objek utama di depan kamera dengan bentuk dan letaknya yang mudah dikenali. A';
-
-    expect(AiService.sanitizeCaption(rawCaption)).toBe(
-      'Ada objek utama di depan kamera dengan bentuk dan letaknya yang mudah dikenali.',
-    );
+  it.each([
+    ['Objek berada di', 'Objek berada di.'],
+    ['Informasi tambahan ke', 'Informasi tambahan ke.'],
+    ['Sistem menggunakan AI', 'Sistem menggunakan AI.'],
+    ['Keyboard memiliki koneksi 3D', 'Keyboard memiliki koneksi 3D.'],
+  ])('preserves valid short caption endings: %s', (rawCaption, expected) => {
+    expect(AiService.sanitizeCaption(rawCaption)).toBe(expected);
   });
 
   it('transcribes audio using the whisper backend when the local service is available', async () => {

@@ -35,11 +35,9 @@ export class AiService {
       return '';
     }
 
-    const withoutTrailingNoise = cleaned.replace(
-      /\s+[A-Za-z0-9]{1,2}\s*$/u,
-      '',
-    );
-    const normalized = withoutTrailingNoise.replace(/[\s.]+$/u, '').trim();
+    // Do not drop short final words: Indonesian prepositions ("di", "ke")
+    // and abbreviations ("AI", "3D") are valid caption endings.
+    const normalized = cleaned.replace(/[\s.]+$/u, '').trim();
 
     if (!normalized) {
       return '';
@@ -60,16 +58,34 @@ export class AiService {
   private async callOllamaVision(
     prompt: string,
     imageBase64: string,
+    mode: ModeKey,
   ): Promise<string> {
     const baseUrl = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const model = process.env.VISION_MODEL ?? 'qwen2.5vl:7b';
+    // Ollama's default generation limit can be too restrictive for captions.
+    // Document mode needs substantially more room for readable OCR output.
+    const numPredict = mode === 'document' ? 2048 : mode === 'simple' ? 160 : 512;
 
-    const response = await axios.post(`${baseUrl}/api/generate`, {
-      model,
-      prompt,
-      images: [imageBase64],
-      stream: false,
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/generate`,
+      {
+        model,
+        prompt,
+        images: [imageBase64],
+        stream: false,
+        options: {
+          num_predict: numPredict,
+          temperature: 0.2,
+        },
+      },
+      { timeout: 180_000 },
+    );
+
+    if (response.data?.done_reason === 'length') {
+      console.warn(
+        `[AiService] Vision caption reached num_predict limit (${numPredict}) for mode ${mode}.`,
+      );
+    }
 
     return String(response.data?.response ?? '').trim();
   }
@@ -221,19 +237,23 @@ export class AiService {
       const imageBase64 = file.buffer.toString('base64');
       const systemPrompt = {
         document:
-          'Bacalah dokumen ini dan jelaskan isinya dengan ringkas namun jelas untuk pengguna tunanetra.',
+          'Bacalah seluruh teks yang terlihat pada dokumen. Pertahankan urutan bacaan dan jelaskan struktur dokumen dengan jelas. Jangan menghilangkan bagian teks yang terbaca.',
         people:
-          'Deskripsikan orang yang terlihat dan aktivitasnya dengan bahasa yang sederhana.',
+          'Deskripsikan orang yang terlihat, pakaian, posisi, ekspresi, dan aktivitas yang tampak. Gunakan 2 sampai 3 kalimat lengkap.',
         environment:
-          'Deskripsikan lingkungan di sekitarnya, objek utama, dan kondisi ruang secara jelas.',
-        simple: 'Berikan deskripsi singkat satu kalimat yang mudah dipahami.',
+          'Deskripsikan lokasi atau lingkungan, objek utama, posisi antarobjek, dan kondisi sekitar. Gunakan 2 sampai 4 kalimat lengkap.',
+        simple:
+          'Berikan satu kalimat lengkap yang menjelaskan objek utama dan ciri paling penting yang terlihat.',
         detail:
-          'Berikan deskripsi visual yang kaya detail tapi tetap ringkas untuk dibacakan.',
+          'Berikan deskripsi visual yang informatif untuk pengguna tunanetra dalam 3 sampai 5 kalimat lengkap. Jelaskan objek utama, ciri fisik, posisi, latar belakang, dan hubungan antarobjek yang benar-benar terlihat. Susun kalimat secara utuh dan natural.',
       }[normalizedMode];
+      const completionInstruction =
+        'PENTING: Tulis jawaban sampai selesai. Jangan memotong kata atau kalimat di tengah. Akhiri dengan tanda baca yang sesuai. Jangan mengarang detail yang tidak terlihat.';
 
       const result = await this.callOllamaVision(
-        `${systemPrompt} ${prompt ?? ''}`.trim(),
+        [systemPrompt, prompt, completionInstruction].filter(Boolean).join(' '),
         imageBase64,
+        normalizedMode,
       );
 
       const caption = AiService.sanitizeCaption(result || fallbackCaption);
