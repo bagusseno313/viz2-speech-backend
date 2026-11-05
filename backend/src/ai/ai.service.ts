@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  GatewayTimeoutException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import axios from 'axios';
 
 type ModeKey = 'document' | 'people' | 'environment' | 'simple' | 'detail';
@@ -88,6 +93,100 @@ export class AiService {
     }
 
     return String(response.data?.response ?? '').trim();
+  }
+
+  private async callPaddleOcr(file: UploadedImage): Promise<{
+    text: string;
+    model: string;
+    language: string;
+  }> {
+    const baseUrl = (
+      process.env.PADDLEOCR_BASE_URL ?? 'http://localhost:8002'
+    ).replace(/\/+$/u, '');
+    const model = process.env.PADDLEOCR_MODEL ?? 'PP-OCRv6';
+    const language = process.env.PADDLEOCR_LANG ?? 'id';
+    const timeoutMs = Number.parseInt(
+      process.env.PADDLEOCR_TIMEOUT_MS ?? '180000',
+      10,
+    );
+
+    if (!file.buffer?.length) {
+      throw new BadGatewayException('Image buffer is empty for PaddleOCR.');
+    }
+
+    const formData = new FormData();
+    const mimeType = file.mimetype ?? 'image/jpeg';
+    const fileName = file.originalname ?? 'document.jpg';
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(file.buffer)], { type: mimeType }),
+      fileName,
+    );
+
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}/ocr`, {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(
+          Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 180000,
+        ),
+      });
+    } catch (error) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'name' in error &&
+        error.name === 'TimeoutError'
+      ) {
+        throw new GatewayTimeoutException(
+          'PaddleOCR processing timed out. Please try a clearer or smaller image.',
+        );
+      }
+
+      console.error('[AiService] PaddleOCR request failed:', error);
+      throw new ServiceUnavailableException(
+        'PaddleOCR service is unavailable. Start the OCR service and try again.',
+      );
+    }
+
+    if (!response.ok) {
+      console.error(
+        `[AiService] PaddleOCR returned HTTP ${response.status}.`,
+      );
+      throw new BadGatewayException(
+        'PaddleOCR could not process this image. Please try again.',
+      );
+    }
+
+    let payload: {
+      text?: string;
+      model?: string;
+      language?: string;
+    };
+    try {
+      payload = (await response.json()) as typeof payload;
+    } catch {
+      throw new BadGatewayException(
+        'PaddleOCR returned an invalid response.',
+      );
+    }
+
+    // Keep line breaks because they represent the reading order and paragraph
+    // boundaries detected by OCR. Only normalize whitespace inside each line.
+    const text = String(payload.text ?? '')
+      .replace(/\r\n?/gu, '\n')
+      .split('\n')
+      .map((line) => line.replace(/[\\t ]+/gu, ' ').trim())
+      .filter(Boolean)
+      .join('\n')
+      .trim();
+
+    return {
+      text,
+      model: payload.model ?? model,
+      language: payload.language ?? language,
+    };
   }
 
   private async callOllamaText(prompt: string): Promise<string> {
@@ -222,6 +321,28 @@ export class AiService {
     const useFakeAi = process.env.USE_FAKE_AI === 'true';
     const provider = process.env.AI_PROVIDER ?? 'mock';
     const model = process.env.VISION_MODEL ?? 'fallback-vision';
+    const ocrProvider = process.env.OCR_PROVIDER ?? 'paddleocr';
+
+    // DOCUMENT mode uses real OCR rather than asking a vision model to
+    // reproduce text. This preserves the exact recognized content and order.
+    if (
+      !useFakeAi &&
+      normalizedMode === 'document' &&
+      ocrProvider === 'paddleocr' &&
+      file?.buffer
+    ) {
+      const ocrResult = await this.callPaddleOcr(file);
+      const caption =
+        ocrResult.text || 'Tidak ada teks yang dapat dikenali dari gambar ini.';
+
+      return {
+        caption,
+        mode: normalizedMode,
+        provider: 'paddleocr',
+        model: ocrResult.model,
+        fileName: file.originalname ?? null,
+      };
+    }
 
     if (useFakeAi || !provider || provider === 'mock') {
       return {
