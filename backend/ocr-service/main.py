@@ -131,7 +131,7 @@ async def recognize_document(
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=415, detail="Upload must be an image.")
 
-    contents = await file.read()
+    contents = await file.read(MAX_IMAGE_BYTES + 1)
     if not contents:
         raise HTTPException(status_code=400, detail="Uploaded image is empty.")
     if len(contents) > MAX_IMAGE_BYTES:
