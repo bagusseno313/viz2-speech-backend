@@ -11,11 +11,16 @@ interface CaptionBackendResponse {
 }
 
 function sanitizeCaptionText(value?: string | null): string {
-  // Preserve short but valid endings such as Indonesian words "di"/"ke"
-  // and abbreviations like "AI"/"3D". Only normalize whitespace here.
-  return String(value ?? "").replace(/\s+/g, " ").trim();
+  // Preserve OCR line order and paragraph boundaries for document reading.
+  // Normalize horizontal whitespace without flattening newlines.
+  return String(value ?? "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
-
 async function imageUriToBlob(
   photoUri: string,
   mimeType: string,

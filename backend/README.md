@@ -130,3 +130,34 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+## PaddleOCR document reading
+
+The frontend's `DOCUMENT` mode uses the separate PaddleOCR service to extract
+text from an uploaded image. Start that service before testing document mode:
+
+```bash
+docker build -t viz2speech-paddleocr ./backend/ocr-service
+docker run --name viz2speech-paddleocr --rm -p 8002:8002 \
+  -v paddleocr-cache:/root/.paddlex viz2speech-paddleocr
+```
+
+On Apple Silicon, use `--platform linux/amd64` for both Docker commands when
+the host PaddlePaddle wheel is unavailable. See
+[`ocr-service/README.md`](ocr-service/README.md) for local setup, API details,
+and configuration.
+
+Set these variables in `.env` (the defaults match a local service):
+
+```env
+OCR_PROVIDER=paddleocr
+PADDLEOCR_BASE_URL=http://localhost:8002
+PADDLEOCR_MODEL=PP-OCRv6
+PADDLEOCR_LANG=id
+PADDLEOCR_TIMEOUT_MS=300000
+```
+
+The first OCR request downloads the model weights. The OCR service must remain
+running while using DOCUMENT mode. Other caption modes continue to use the
+configured vision model.
