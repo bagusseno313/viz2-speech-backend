@@ -83,8 +83,12 @@ def extract_ocr_lines(predictions: Any) -> list[dict[str, float | str]]:
     lines: list[dict[str, float | str]] = []
     for prediction in predictions:
         payload = _result_payload(prediction)
-        texts = payload.get("rec_texts") or []
-        scores = payload.get("rec_scores") or []
+        texts = payload.get("rec_texts")
+        scores = payload.get("rec_scores")
+        if texts is None:
+            texts = []
+        if scores is None:
+            scores = []
 
         for index, raw_text in enumerate(texts):
             text = " ".join(str(raw_text).split()).strip()
