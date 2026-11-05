@@ -38,7 +38,7 @@ describe('AiService', () => {
       ok: true,
       status: 200,
       json: async () => ({
-        text: 'SURAT KETERANGAN\\nNama: Budi\\nAlamat: Surakarta',
+        text: 'SURAT KETERANGAN\nNama: Budi\nAlamat: Surakarta',
         model: 'PP-OCRv6',
         language: 'id',
       }),
@@ -55,7 +55,7 @@ describe('AiService', () => {
     );
 
     expect(result).toMatchObject({
-      caption: 'SURAT KETERANGAN\\nNama: Budi\\nAlamat: Surakarta',
+      caption: 'SURAT KETERANGAN\nNama: Budi\nAlamat: Surakarta',
       mode: 'document',
       provider: 'paddleocr',
       model: 'PP-OCRv6',
